@@ -10,22 +10,22 @@ interface ValidationError extends Error {
 }
 
 const registerUser = asyncHandler(async (req: Request, res: Response) => {
-    const { name, email, password } = req.body;
+    const { name, phone_number, password } = req.body;
     try{
-        await registerSchema.validate({ name, email, password });
+        await registerSchema.validate({ name, phone_number, password });
     } catch (error) {
         const validationError = error as ValidationError;
-        const errorMessage = validationError.errors?.join(", ") || "Validation failed";
+        const errorMessage = validationError.errors?.join(", ") ?? "Validation failed";
         throw new ApiError(400, errorMessage);
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ phone_number });
 
     if(existingUser){
         throw new ApiError(400, "User already exists");
     }
 
-    const user = await User.create({ name, email, password });
+    const user = await User.create({ name, phone_number, password });
 
     if(!user){
         throw new ApiError(500, "Failed to register user");
@@ -37,22 +37,16 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
 })
 
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
-    //1. Get data from frontend
-    //2. validation
-    //3. Check if user with this email exists
-    //4. Compare password
-    //5. Create Token
-    //6. Send Token in response
-    const { email, password } = req.body;
+    const { phone_number, password } = req.body;
     try{
-        await loginSchema.validate({ email, password });
+        await loginSchema.validate({ phone_number, password });
     }catch (error) {
         const validationError = error as ValidationError;
-        const errorMessage = validationError.errors?.join(", ") || "Validation failed";
+        const errorMessage = validationError.errors?.join(", ") ?? "Validation failed";
         throw new ApiError(400, errorMessage);
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ phone_number });
     if(!user){
         throw new ApiError(400, "User not found");
     }

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 
 interface IUser extends Document {
     _id?: string;
-    email: string;
+    phone_number: string;
     password: string;
     name: string;
     homeId: string[];
@@ -13,7 +13,7 @@ interface IUser extends Document {
 }
 
 const userSchema: Schema<IUser> = new Schema({
-    email: { type: String, required: true, unique: true },
+    phone_number: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
     homeId: [{ type: String }]
