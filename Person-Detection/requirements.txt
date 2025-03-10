@@ -1,0 +1,4 @@
+ultralytics
+torch
+playsound==1.2.2
+paho-mqtt
