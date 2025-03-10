@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import ApiError from "../utils/apiError.utils";
 import ApiResponse from "../utils/apiResponse.util";
 import { asyncHandler } from "../utils/asyncHandler.utils";
 import { loginSchema, registerSchema } from "../validators/authValidator";
@@ -16,24 +15,29 @@ const registerUser = asyncHandler(async (req: Request, res: Response) => {
     } catch (error) {
         const validationError = error as ValidationError;
         const errorMessage = validationError.errors?.join(", ") ?? "Validation failed";
-        throw new ApiError(400, errorMessage);
+        return res.status(400).json(new ApiResponse(400, null, errorMessage));
     }
 
     const existingUser = await User.findOne({ phone_number });
 
     if(existingUser){
-        throw new ApiError(400, "User already exists");
+        return res.status(400).json(new ApiResponse(400, null, "User already exists"));
     }
 
-    const user = await User.create({ name, phone_number, password });
-
-    if(!user){
-        throw new ApiError(500, "Failed to register user");
+    try {
+        const user = await User.create({ phone_number, password, name });
+        if(!user){
+        return res.status(500).json(new ApiResponse(500, null, "Failed to register user"));
+        }
+        const userData = await User.findById(user._id).select("-password");
+        res.json(new ApiResponse(200, userData, "User Registered Successfully"));
+    } catch (error: any) {
+        if (error.code > 500) {
+            return res.status(400).json(new ApiResponse(400, null, "User with this phone number already exists"));
+        } else {
+            return res.status(500).json(new ApiResponse(500, null, "Failed to register user"));
+        }
     }
-
-    const userData = await User.findById(user._id).select("-password");
-
-    res.json(new ApiResponse(200, userData, "User Registered Successfully"));
 })
 
 const loginUser = asyncHandler(async (req: Request, res: Response) => {
@@ -43,21 +47,25 @@ const loginUser = asyncHandler(async (req: Request, res: Response) => {
     }catch (error) {
         const validationError = error as ValidationError;
         const errorMessage = validationError.errors?.join(", ") ?? "Validation failed";
-        throw new ApiError(400, errorMessage);
+        return res.status(400).json(new ApiResponse(400, null, errorMessage));
     }
 
     const user = await User.findOne({ phone_number });
     if(!user){
-        throw new ApiError(400, "User not found");
+        return res.status(400).json(new ApiResponse(400, null, "User not found"));
     }
 
-    const isMatch = await user.isValidPassword(password);
+    const isMatch = await user?.isValidPassword(password);
     if(!isMatch){
-        throw new ApiError(400, "Password is incorrect");
+        return res.status(400).json(new ApiResponse(400, null, "Password is incorrect"));
     }
 
-    const token = await user.generateToken();
-    res.json(new ApiResponse(200, { token }, "Login Successful"));
+    const token = await user?.generateToken();
+    return res.status(200).json(new ApiResponse(200, { token, user }, "Login Successful"));
 });
 
-export { registerUser ,loginUser};
+const getProfile = asyncHandler(async (req: Request, res: Response) => {
+    return res.status(200).json(new ApiResponse(200, { user: res.locals.user }, "User Generated Successfully"));
+});
+
+export { registerUser ,loginUser, getProfile };

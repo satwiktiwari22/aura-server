@@ -4,7 +4,7 @@ interface CustomError extends Error {
     code?: number;
 }
 
-type AsyncFunction = (req: Request, res: Response, next: NextFunction) => Promise<void>;
+type AsyncFunction = (req: Request, res: Response, next: NextFunction) => Promise<any>;
 
 export const asyncHandler = (fn: AsyncFunction) => async (req: Request, res: Response, next: NextFunction) => {
     try {

@@ -7,7 +7,6 @@ interface IUser extends Document {
     phone_number: string;
     password: string;
     name: string;
-    homeId: string[];
     isValidPassword(password: string): Promise<boolean>;
     generateToken(): Promise<string>;
 }
@@ -16,7 +15,6 @@ const userSchema: Schema<IUser> = new Schema({
     phone_number: { type: String, required: true, unique: true },
     password: { type: String, required: true },
     name: { type: String, required: true },
-    homeId: [{ type: String }]
 });
 
 userSchema.pre("save", async function (next) {
@@ -31,8 +29,8 @@ userSchema.pre("save", async function (next) {
 };
 
 userSchema.methods.generateToken = async function () {
-    const secret = process.env.JWT_SECRET || 'defaultSecret';
-    const expiresIn = process.env.JWT_EXPIRE || '1h';
+    const secret = process.env.JWT_SECRET ?? 'defaultSecret';
+    const expiresIn = process.env.JWT_EXPIRE ?? '1h';
 
     return jwt.sign({ _id: this._id }, secret, { expiresIn });
 };
